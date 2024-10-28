@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useAccount } from "wagmi";
 import { useEffect, useState } from "react";
 import { shortenAddress } from "@/lib/address";
-import { useWeb3Modal } from "@web3modal/wagmi/react";
+import { useAppKit } from "@reown/appkit/react";
 import { useRouter } from "next/navigation";
 
 export function ThriveEvmConnectButton() {
   const { isConnected, address } = useAccount();
-  const { open, close } = useWeb3Modal();
+  const { open, close } = useAppKit();
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   useEffect(() => {

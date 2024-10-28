@@ -1,37 +1,96 @@
-import { WagmiProvider, createConfig, http } from "wagmi";
-import {} from "wagmi/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactNode } from "react";
-import { defaultWagmiConfig } from "@web3modal/wagmi/react/config";
-import { createWeb3Modal } from "@web3modal/wagmi/react";
-import { cookieStorage, createStorage, State } from "wagmi";
-import { base, baseSepolia } from "wagmi/chains";
-import { metadata, config, projectId } from "@/lib/config/wagmi";
-// [baseSepolia.id]: http(
-//   `https://lb.drpc.org/ogrpc?network=base-sepolia&dkey=${process.env.NEXT_PUBLIC_DRPC_ID}`,
-// ),
-const queryClient = new QueryClient();
-if (!projectId) throw new Error("Project ID is not defined");
+// import { WagmiProvider, createConfig, http } from "wagmi";
+// import {} from "wagmi/chains";
+// import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+// import { ReactNode } from "react";
+// import { defaultWagmiConfig } from "@web3modal/wagmi/react/config";
+// import { createWeb3Modal } from "@web3modal/wagmi/react";
+// import { cookieStorage, createStorage, State } from "wagmi";
+// import { base, baseSepolia } from "wagmi/chains";
+// import { metadata, config, projectId } from "@/lib/config/wagmi";
+// // [baseSepolia.id]: http(
+// //   `https://lb.drpc.org/ogrpc?network=base-sepolia&dkey=${process.env.NEXT_PUBLIC_DRPC_ID}`,
+// // ),
+// const queryClient = new QueryClient();
+// if (!projectId) throw new Error("Project ID is not defined");
 
-createWeb3Modal({
-  metadata,
-  wagmiConfig: config,
-  projectId,
-  enableSwaps: true,
-  enableOnramp: true,
-  enableAnalytics: true, // Optional - defaults to your Cloud configuration
+// createWeb3Modal({
+//   metadata,
+//   wagmiConfig: config,
+//   projectId,
+//   enableSwaps: true,
+//   enableOnramp: true,
+//   enableAnalytics: true, // Optional - defaults to your Cloud configuration
+// });
+
+// export const Web3Provider = ({
+//   children,
+//   initialState,
+// }: {
+//   children: ReactNode;
+//   initialState?: State;
+// }) => {
+//   return (
+//     <WagmiProvider config={config} initialState={initialState}>
+//       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+//     </WagmiProvider>
+//   );
+// };
+
+"use client";
+
+import { wagmiAdapter, projectId } from "@/lib/config/reown-config";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createAppKit } from "@reown/appkit/react";
+import { mainnet, arbitrum } from "@reown/appkit/networks";
+import React, { type ReactNode } from "react";
+import { cookieToInitialState, WagmiProvider, type Config } from "wagmi";
+
+// Set up queryClient
+const queryClient = new QueryClient();
+
+if (!projectId) {
+	throw new Error("Project ID is not defined");
+}
+
+// Set up metadata
+const metadata = {
+	name: "appkit-example",
+	description: "AppKit Example",
+	url: "https://appkitexampleapp.com", // origin must match your domain & subdomain
+	icons: ["https://avatars.githubusercontent.com/u/179229932"],
+};
+
+// Create the modal
+const modal = createAppKit({
+	adapters: [wagmiAdapter],
+	projectId,
+	networks: [mainnet, arbitrum],
+	defaultNetwork: mainnet,
+	metadata: metadata,
+	features: {
+		analytics: true, // Optional - defaults to your Cloud configuration
+	},
 });
 
-export const Web3Provider = ({
-  children,
-  initialState,
+function Web3ContextProvider({
+	children,
+	cookies,
 }: {
-  children: ReactNode;
-  initialState?: State;
-}) => {
-  return (
-    <WagmiProvider config={config} initialState={initialState}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </WagmiProvider>
-  );
-};
+	children: ReactNode;
+	cookies: string | null;
+}) {
+	const initialState = cookieToInitialState(
+		wagmiAdapter.wagmiConfig as Config,
+		cookies,
+	);
+
+	return (
+		<WagmiProvider
+			config={wagmiAdapter.wagmiConfig as Config}
+			initialState={initialState}>
+			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+		</WagmiProvider>
+	);
+}
+
+export default Web3ContextProvider;
